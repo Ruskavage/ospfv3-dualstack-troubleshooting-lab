@@ -1,0 +1,86 @@
+!
+! R5-Area2  |  Area 2 router, WS2 LAN gateway
+! ============================================================
+! FAULT F8: OSPF hello-interval 10 / dead-interval 40 on G0/1
+!           R6 uses hello 30 / dead 120 — mismatch prevents adjacency
+! FAULT F9: ip helper-address 192.168.3.99 is invalid (no DHCP server there)
+! ============================================================
+!
+hostname R5-Area2
+!
+ip routing
+ipv6 unicast-routing
+!
+interface Loopback0
+ ip address 5.5.5.5 255.255.255.255
+ ipv6 address 2001:db8:2:5::5/128
+ ipv6 ospf 1 area 2
+ no shutdown
+!
+interface GigabitEthernet0/0
+ description LINK-TO-R2-ABR
+ ip address 10.2.0.2 255.255.255.252
+ ipv6 address 2001:db8:2:25::2/64
+ ipv6 ospf 1 area 2
+ ip ospf 1 area 2
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LINK-TO-R6-Area2
+ ip address 10.2.1.1 255.255.255.252
+ ipv6 address 2001:db8:2:56::1/64
+ ! FAULT F8: timer mismatch — R6 uses hello 30 dead 120
+ ip ospf hello-interval 10
+ ip ospf dead-interval 40
+ ipv6 ospf hello-interval 10
+ ipv6 ospf dead-interval 40
+ ipv6 ospf 1 area 2
+ ip ospf 1 area 2
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description LAN-WS2
+ ip address 192.168.2.1 255.255.255.0
+ ipv6 address 2001:db8:2:200::1/64
+ ip ospf 1 area 2
+ ipv6 ospf 1 area 2
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 dhcp server AREA2-V6-WS
+ ! FAULT F9: wrong helper-address — should be removed (DHCP pool is local on R5)
+ ip helper-address 192.168.3.99
+ no shutdown
+!
+ip dhcp excluded-address 192.168.2.1 192.168.2.10
+ip dhcp pool AREA2-WS2
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1
+ dns-server 8.8.8.8
+ lease 1
+!
+ipv6 dhcp pool AREA2-V6-WS
+ address prefix 2001:db8:2:200::/64 lifetime 86400 3600
+ dns-server 2001:4860:4860::8888
+ domain-name lab.local
+!
+router ospf 1
+ router-id 5.5.5.5
+ network 5.5.5.5 0.0.0.0 area 2
+ network 10.2.0.0 0.0.0.3 area 2
+ network 10.2.1.0 0.0.0.3 area 2
+ network 192.168.2.0 0.0.0.255 area 2
+!
+ipv6 router ospf 1
+ router-id 5.5.5.5
+!
+ip domain-name lab.local
+no ip domain-lookup
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login local
+ transport input ssh
+username admin privilege 15 secret cisco123
+!
+end

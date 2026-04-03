@@ -1,0 +1,80 @@
+!
+! R6-Area2  |  Area 2 edge router, WS3 LAN gateway
+! ============================================================
+! FAULT F8: hello-interval 30 / dead-interval 120 on G0/0
+!           R5 uses hello 10 / dead 40 — mismatch prevents adjacency
+! FAULT F10: default-information originate always missing from OSPFv2 and OSPFv3
+!            WS3 subnet is isolated — no default or summary route propagated
+! ============================================================
+!
+hostname R6-Area2
+!
+ip routing
+ipv6 unicast-routing
+!
+interface Loopback0
+ ip address 6.6.6.6 255.255.255.255
+ ipv6 address 2001:db8:2:6::6/128
+ ipv6 ospf 1 area 2
+ no shutdown
+!
+interface GigabitEthernet0/0
+ description LINK-TO-R5-Area2
+ ip address 10.2.1.2 255.255.255.252
+ ipv6 address 2001:db8:2:56::2/64
+ ! FAULT F8: timer mismatch — R5 uses hello 10 dead 40
+ ip ospf hello-interval 30
+ ip ospf dead-interval 120
+ ipv6 ospf hello-interval 30
+ ipv6 ospf dead-interval 120
+ ipv6 ospf 1 area 2
+ ip ospf 1 area 2
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LAN-WS3
+ ip address 192.168.3.1 255.255.255.0
+ ipv6 address 2001:db8:2:300::1/64
+ ip ospf 1 area 2
+ ipv6 ospf 1 area 2
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 dhcp server AREA2-V6-WS3
+ no shutdown
+!
+ip dhcp excluded-address 192.168.3.1 192.168.3.10
+ip dhcp pool AREA2-WS3
+ network 192.168.3.0 255.255.255.0
+ default-router 192.168.3.1
+ dns-server 8.8.8.8
+ lease 1
+!
+ipv6 dhcp pool AREA2-V6-WS3
+ address prefix 2001:db8:2:300::/64 lifetime 86400 3600
+ dns-server 2001:4860:4860::8888
+ domain-name lab.local
+!
+router ospf 1
+ router-id 6.6.6.6
+ network 6.6.6.6 0.0.0.0 area 2
+ network 10.2.1.0 0.0.0.3 area 2
+ network 192.168.3.0 0.0.0.255 area 2
+ ! FAULT F10: default-information originate always is missing
+ ! Fix: add  ->  default-information originate always
+!
+ipv6 router ospf 1
+ router-id 6.6.6.6
+ ! FAULT F10: default-information originate always missing for IPv6 too
+ ! Fix: add  ->  default-information originate always
+!
+ip domain-name lab.local
+no ip domain-lookup
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login local
+ transport input ssh
+username admin privilege 15 secret cisco123
+!
+end

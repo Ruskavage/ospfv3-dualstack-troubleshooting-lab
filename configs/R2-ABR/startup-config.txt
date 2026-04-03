@@ -1,0 +1,55 @@
+!
+! R2-ABR  |  Area 0 + Area 2 ABR
+! ============================================================
+! FAULT F3: OSPFv3 router-id not configured — process will not start reliably
+! FAULT F4: IPv4 OSPF area mismatch on G0/1 (area 0 instead of area 2)
+! ============================================================
+!
+hostname R2-ABR
+!
+ip routing
+ipv6 unicast-routing
+!
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+ ipv6 address 2001:db8:0:2::2/128
+ ipv6 ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet0/0
+ description LINK-TO-R1-Area0
+ ip address 10.0.0.2 255.255.255.252
+ ipv6 address 2001:db8:0:12::2/64
+ ipv6 ospf 1 area 0
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LINK-TO-R5-Area2
+ ip address 10.2.0.1 255.255.255.252
+ ipv6 address 2001:db8:2:25::1/64
+ ipv6 ospf 1 area 2
+ ! FAULT F4: IPv4 OSPF placed in area 0 instead of area 2
+ ip ospf 1 area 0
+ no shutdown
+!
+router ospf 1
+ router-id 2.2.2.2
+ network 2.2.2.2 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.2.0.0 0.0.0.3 area 2
+!
+! FAULT F3: OSPFv3 router-id intentionally omitted
+ipv6 router ospf 1
+!
+ip domain-name lab.local
+no ip domain-lookup
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login local
+ transport input ssh
+username admin privilege 15 secret cisco123
+!
+end

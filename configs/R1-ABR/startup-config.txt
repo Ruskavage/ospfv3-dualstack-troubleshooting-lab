@@ -1,0 +1,56 @@
+!
+! R1-ABR  |  Area 0 + Area 1 ABR
+! ============================================================
+! FAULT F1: OSPFv3 process-ID mismatch on G0/1 (process 2 instead of 1)
+! FAULT F2: ipv6 unicast-routing is intentionally omitted
+! ============================================================
+!
+hostname R1-ABR
+!
+! FAULT F2: ipv6 unicast-routing missing — router will not forward IPv6 traffic
+!
+ip routing
+!
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+ ipv6 address 2001:db8:0:1::1/128
+ ipv6 ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet0/0
+ description LINK-TO-R2-Area0
+ ip address 10.0.0.1 255.255.255.252
+ ipv6 address 2001:db8:0:12::1/64
+ ipv6 ospf 1 area 0
+ ip ospf 1 area 0
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LINK-TO-R3-Area1
+ ip address 10.1.0.1 255.255.255.252
+ ipv6 address 2001:db8:1:13::1/64
+ ! FAULT F1: wrong OSPFv3 process-id (2 instead of 1) — adjacency will not form with R3
+ ipv6 ospf 2 area 1
+ ip ospf 1 area 1
+ no shutdown
+!
+router ospf 1
+ router-id 1.1.1.1
+ network 1.1.1.1 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.1.0.0 0.0.0.3 area 1
+!
+ipv6 router ospf 1
+ router-id 1.1.1.1
+!
+ip domain-name lab.local
+no ip domain-lookup
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login local
+ transport input ssh
+username admin privilege 15 secret cisco123
+!
+end

@@ -1,0 +1,57 @@
+!
+! R4-Area1  |  Area 1 LAN gateway for WS1
+! ============================================================
+! FAULT F6: GigabitEthernet0/1 (WS1 LAN) is administratively shutdown
+! FAULT F7: DHCPv6 server not applied to G0/1 + ND managed-config-flag missing
+! ============================================================
+!
+hostname R4-Area1
+!
+ip routing
+ipv6 unicast-routing
+!
+interface Loopback0
+ ip address 4.4.4.4 255.255.255.255
+ ipv6 address 2001:db8:1:4::4/128
+ ipv6 ospf 1 area 1
+ no shutdown
+!
+interface GigabitEthernet0/0
+ description LINK-TO-R3-Area1
+ ip address 10.1.1.2 255.255.255.252
+ ipv6 address 2001:db8:1:34::2/64
+ ipv6 ospf 1 area 1
+ ip ospf 1 area 1
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LAN-WS1
+ ip address 192.168.1.1 255.255.255.0
+ ipv6 address 2001:db8:1:100::1/64
+ ip ospf 1 area 1
+ ipv6 ospf 1 area 1
+ ! FAULT F7: ipv6 dhcp server AREA1-V6-WS1 is missing
+ ! FAULT F7: ipv6 nd managed-config-flag is missing — clients won't request DHCPv6
+ ! FAULT F6: interface is shutdown — WS1 has no Layer 2 or Layer 3 connectivity
+ shutdown
+!
+router ospf 1
+ router-id 4.4.4.4
+ network 4.4.4.4 0.0.0.0 area 1
+ network 10.1.1.0 0.0.0.3 area 1
+ network 192.168.1.0 0.0.0.255 area 1
+!
+ipv6 router ospf 1
+ router-id 4.4.4.4
+!
+ip domain-name lab.local
+no ip domain-lookup
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login local
+ transport input ssh
+username admin privilege 15 secret cisco123
+!
+end

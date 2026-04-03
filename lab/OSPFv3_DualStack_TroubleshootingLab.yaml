@@ -1,0 +1,844 @@
+annotations: []
+smart_annotations:
+  - tag: abr
+    is_on: true
+    padding: 35
+    label: abr
+    tag_offset_x: 0
+    tag_offset_y: 0
+    tag_size: 14
+    group_distance: 400
+    thickness: 1
+    border_style: ''
+    fill_color: '#00B14080'
+    border_color: '#00000080'
+    z_index: 1
+  - tag: area0
+    is_on: true
+    padding: 35
+    label: area0
+    tag_offset_x: 0
+    tag_offset_y: 0
+    tag_size: 14
+    group_distance: 400
+    thickness: 1
+    border_style: ''
+    fill_color: '#A95FBE80'
+    border_color: '#00000080'
+    z_index: 1
+  - tag: area1
+    is_on: true
+    padding: 35
+    label: area1
+    tag_offset_x: 0
+    tag_offset_y: 0
+    tag_size: 14
+    group_distance: 400
+    thickness: 1
+    border_style: ''
+    fill_color: '#FFD10080'
+    border_color: '#00000080'
+    z_index: 2
+  - tag: area2
+    is_on: true
+    padding: 35
+    label: area2
+    tag_offset_x: 0
+    tag_offset_y: 0
+    tag_size: 14
+    group_distance: 400
+    thickness: 1
+    border_style: ''
+    fill_color: '#B7E3D980'
+    border_color: '#00000080'
+    z_index: 3
+  - tag: workstation
+    is_on: true
+    padding: 35
+    label: workstation
+    tag_offset_x: 0
+    tag_offset_y: 0
+    tag_size: 14
+    group_distance: 400
+    thickness: 1
+    border_style: ''
+    fill_color: '#009C8C80'
+    border_color: '#00000080'
+    z_index: 4
+nodes:
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R1-ABR  |  Area 0 + Area 1 ABR
+          ! FAULTS: #1 OSPFv3 process-id mismatch (uses 2 on G0/1 instead of 1)
+          !         #2 IPv6 unicast-routing NOT enabled (missing command)
+          !
+          hostname R1-ABR
+          !
+          ! FAULT #2: ipv6 unicast-routing is intentionally omitted
+          !
+          ip routing
+          !
+          interface Loopback0
+           ip address 1.1.1.1 255.255.255.255
+           ipv6 address 2001:db8:0:1::1/128
+           ipv6 ospf 1 area 0
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R2-Area0
+           ip address 10.0.0.1 255.255.255.252
+           ipv6 address 2001:db8:0:12::1/64
+           ipv6 ospf 1 area 0
+           ip ospf 1 area 0
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LINK-TO-R3-Area1
+           ip address 10.1.0.1 255.255.255.252
+           ipv6 address 2001:db8:1:13::1/64
+           ! FAULT #1: wrong OSPFv3 process-id (2 instead of 1) - adjacency will not form
+           ipv6 ospf 2 area 1
+           ip ospf 1 area 1
+           no shutdown
+          !
+          router ospf 1
+           router-id 1.1.1.1
+           network 1.1.1.1 0.0.0.0 area 0
+           network 10.0.0.0 0.0.0.3 area 0
+           network 10.1.0.0 0.0.0.3 area 1
+          !
+          ipv6 router ospf 1
+           router-id 1.1.1.1
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n0
+    image_definition: null
+    label: R1-ABR
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area0
+      - abr
+    x: 0
+    y: 0
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R2-ABR  |  Area 0 + Area 2 ABR
+          ! FAULTS: #3 OSPFv3 router-id missing
+          !         #4 IPv4 OSPF area mismatch on G0/1 (area 0 instead of area 2)
+          !
+          hostname R2-ABR
+          !
+          ip routing
+          ipv6 unicast-routing
+          !
+          interface Loopback0
+           ip address 2.2.2.2 255.255.255.255
+           ipv6 address 2001:db8:0:2::2/128
+           ipv6 ospf 1 area 0
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R1-Area0
+           ip address 10.0.0.2 255.255.255.252
+           ipv6 address 2001:db8:0:12::2/64
+           ipv6 ospf 1 area 0
+           ip ospf 1 area 0
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LINK-TO-R5-Area2
+           ip address 10.2.0.1 255.255.255.252
+           ipv6 address 2001:db8:2:25::1/64
+           ipv6 ospf 1 area 2
+           ! FAULT #4: IPv4 OSPF placed in area 0 instead of area 2
+           ip ospf 1 area 0
+           no shutdown
+          !
+          router ospf 1
+           router-id 2.2.2.2
+           network 2.2.2.2 0.0.0.0 area 0
+           network 10.0.0.0 0.0.0.3 area 0
+           network 10.2.0.0 0.0.0.3 area 2
+          !
+          ! FAULT #3: OSPFv3 router-id intentionally omitted
+          ipv6 router ospf 1
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n1
+    image_definition: null
+    label: R2-ABR
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area0
+      - abr
+    x: 400
+    y: 0
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R3-Area1  |  Internal Area 1 router + DHCPv4/v6 server for WS1
+          ! FAULT #5: DHCPv4 pool excludes the entire usable range
+          !
+          hostname R3-Area1
+          !
+          ip routing
+          ipv6 unicast-routing
+          !
+          interface Loopback0
+           ip address 3.3.3.3 255.255.255.255
+           ipv6 address 2001:db8:1:3::3/128
+           ipv6 ospf 1 area 1
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R1-Area1
+           ip address 10.1.0.2 255.255.255.252
+           ipv6 address 2001:db8:1:13::2/64
+           ipv6 ospf 1 area 1
+           ip ospf 1 area 1
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LINK-TO-R4-Area1
+           ip address 10.1.1.1 255.255.255.252
+           ipv6 address 2001:db8:1:34::1/64
+           ipv6 ospf 1 area 1
+           ip ospf 1 area 1
+           no shutdown
+          !
+          ! FAULT #5: excludes the whole WS1 subnet - no addresses will be handed out
+          ip dhcp excluded-address 192.168.1.1 192.168.1.254
+          ip dhcp pool AREA1-WS1
+           network 192.168.1.0 255.255.255.0
+           default-router 192.168.1.1
+           dns-server 8.8.8.8
+           lease 1
+          !
+          router ospf 1
+           router-id 3.3.3.3
+           network 3.3.3.3 0.0.0.0 area 1
+           network 10.1.0.0 0.0.0.3 area 1
+           network 10.1.1.0 0.0.0.3 area 1
+           network 192.168.1.0 0.0.0.255 area 1
+          !
+          ipv6 router ospf 1
+           router-id 3.3.3.3
+          !
+          ipv6 dhcp pool AREA1-V6-WS1
+           address prefix 2001:db8:1:100::/64 lifetime 86400 3600
+           dns-server 2001:4860:4860::8888
+           domain-name lab.local
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n2
+    image_definition: null
+    label: R3-Area1
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area1
+    x: 0
+    y: 160
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R4-Area1  |  Area 1 edge, WS1 LAN gateway
+          ! FAULT #6: interface toward WS1 is administratively shutdown
+          ! FAULT #7: DHCPv6 server not applied, ND managed-flag missing
+          !
+          hostname R4-Area1
+          !
+          ip routing
+          ipv6 unicast-routing
+          !
+          interface Loopback0
+           ip address 4.4.4.4 255.255.255.255
+           ipv6 address 2001:db8:1:4::4/128
+           ipv6 ospf 1 area 1
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R3-Area1
+           ip address 10.1.1.2 255.255.255.252
+           ipv6 address 2001:db8:1:34::2/64
+           ipv6 ospf 1 area 1
+           ip ospf 1 area 1
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LAN-WS1-Area1
+           ip address 192.168.1.1 255.255.255.0
+           ipv6 address 2001:db8:1:100::1/64
+           ip ospf 1 area 1
+           ipv6 ospf 1 area 1
+           ! FAULT #7: ipv6 dhcp server and nd managed-config-flag omitted
+           ! FAULT #6: interface is shutdown
+           shutdown
+          !
+          router ospf 1
+           router-id 4.4.4.4
+           network 4.4.4.4 0.0.0.0 area 1
+           network 10.1.1.0 0.0.0.3 area 1
+           network 192.168.1.0 0.0.0.255 area 1
+          !
+          ipv6 router ospf 1
+           router-id 4.4.4.4
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n3
+    image_definition: null
+    label: R4-Area1
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area1
+    x: -200
+    y: 160
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R5-Area2  |  ABR side Area 2, WS2 LAN gateway
+          ! FAULT #8: OSPF hello/dead timer mismatch with R6
+          ! FAULT #9: ip helper-address pointing to wrong DHCP server IP
+          !
+          hostname R5-Area2
+          !
+          ip routing
+          ipv6 unicast-routing
+          !
+          interface Loopback0
+           ip address 5.5.5.5 255.255.255.255
+           ipv6 address 2001:db8:2:5::5/128
+           ipv6 ospf 1 area 2
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R2-Area2
+           ip address 10.2.0.2 255.255.255.252
+           ipv6 address 2001:db8:2:25::2/64
+           ipv6 ospf 1 area 2
+           ip ospf 1 area 2
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LINK-TO-R6-Area2
+           ip address 10.2.1.1 255.255.255.252
+           ipv6 address 2001:db8:2:56::1/64
+           ! FAULT #8: hello 10 dead 40 mismatches R6 hello 30 dead 120
+           ip ospf hello-interval 10
+           ip ospf dead-interval 40
+           ipv6 ospf hello-interval 10
+           ipv6 ospf dead-interval 40
+           ipv6 ospf 1 area 2
+           ip ospf 1 area 2
+           no shutdown
+          !
+          interface GigabitEthernet0/2
+           description LAN-WS2-Area2
+           ip address 192.168.2.1 255.255.255.0
+           ipv6 address 2001:db8:2:200::1/64
+           ip ospf 1 area 2
+           ipv6 ospf 1 area 2
+           ipv6 nd managed-config-flag
+           ipv6 nd other-config-flag
+           ipv6 dhcp server AREA2-V6-WS
+           ! FAULT #9: wrong helper-address - points to non-existent host
+           ip helper-address 192.168.3.99
+           no shutdown
+          !
+          ip dhcp excluded-address 192.168.2.1 192.168.2.10
+          ip dhcp pool AREA2-WS2
+           network 192.168.2.0 255.255.255.0
+           default-router 192.168.2.1
+           dns-server 8.8.8.8
+           lease 1
+          !
+          ipv6 dhcp pool AREA2-V6-WS
+           address prefix 2001:db8:2:200::/64 lifetime 86400 3600
+           dns-server 2001:4860:4860::8888
+           domain-name lab.local
+          !
+          router ospf 1
+           router-id 5.5.5.5
+           network 5.5.5.5 0.0.0.0 area 2
+           network 10.2.0.0 0.0.0.3 area 2
+           network 10.2.1.0 0.0.0.3 area 2
+           network 192.168.2.0 0.0.0.255 area 2
+          !
+          ipv6 router ospf 1
+           router-id 5.5.5.5
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n4
+    image_definition: null
+    label: R5-Area2
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area2
+    x: 400
+    y: 160
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          !
+          ! R6-Area2  |  Area 2 edge, WS3 LAN gateway
+          ! FAULT #8 (pair): hello 30, dead 120 - mismatches R5
+          ! FAULT #10: default-information originate missing
+          !
+          hostname R6-Area2
+          !
+          ip routing
+          ipv6 unicast-routing
+          !
+          interface Loopback0
+           ip address 6.6.6.6 255.255.255.255
+           ipv6 address 2001:db8:2:6::6/128
+           ipv6 ospf 1 area 2
+           no shutdown
+          !
+          interface GigabitEthernet0/0
+           description LINK-TO-R5-Area2
+           ip address 10.2.1.2 255.255.255.252
+           ipv6 address 2001:db8:2:56::2/64
+           ! FAULT #8: hello 30 dead 120 mismatches R5 hello 10 dead 40
+           ip ospf hello-interval 30
+           ip ospf dead-interval 120
+           ipv6 ospf hello-interval 30
+           ipv6 ospf dead-interval 120
+           ipv6 ospf 1 area 2
+           ip ospf 1 area 2
+           no shutdown
+          !
+          interface GigabitEthernet0/1
+           description LAN-WS3-Area2
+           ip address 192.168.3.1 255.255.255.0
+           ipv6 address 2001:db8:2:300::1/64
+           ip ospf 1 area 2
+           ipv6 ospf 1 area 2
+           ipv6 nd managed-config-flag
+           ipv6 nd other-config-flag
+           ipv6 dhcp server AREA2-V6-WS3
+           no shutdown
+          !
+          ip dhcp excluded-address 192.168.3.1 192.168.3.10
+          ip dhcp pool AREA2-WS3
+           network 192.168.3.0 255.255.255.0
+           default-router 192.168.3.1
+           dns-server 8.8.8.8
+           lease 1
+          !
+          ipv6 dhcp pool AREA2-V6-WS3
+           address prefix 2001:db8:2:300::/64 lifetime 86400 3600
+           dns-server 2001:4860:4860::8888
+           domain-name lab.local
+          !
+          router ospf 1
+           router-id 6.6.6.6
+           network 6.6.6.6 0.0.0.0 area 2
+           network 10.2.1.0 0.0.0.3 area 2
+           network 192.168.3.0 0.0.0.255 area 2
+           ! FAULT #10: default-information originate always is missing
+          !
+          ipv6 router ospf 1
+           router-id 6.6.6.6
+           ! FAULT #10: default-information originate always missing for IPv6 too
+          !
+          ip domain-name lab.local
+          no ip domain-lookup
+          !
+          line con 0
+           logging synchronous
+          line vty 0 4
+           login local
+           transport input ssh
+          username admin privilege 15 secret cisco123
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n5
+    image_definition: null
+    label: R6-Area2
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags:
+      - area2
+    x: 600
+    y: 160
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n6
+    image_definition: null
+    label: WS1-Area1
+    node_definition: desktop
+    parameters: {}
+    ram: null
+    tags:
+      - area1
+      - workstation
+    x: -200
+    y: 320
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n7
+    image_definition: null
+    label: WS2-Area2
+    node_definition: desktop
+    parameters: {}
+    ram: null
+    tags:
+      - area2
+      - workstation
+    x: 400
+    y: 320
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n8
+    image_definition: null
+    label: WS3-Area2
+    node_definition: desktop
+    parameters: {}
+    ram: null
+    tags:
+      - area2
+      - workstation
+    x: 600
+    y: 320
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+links:
+  - id: l0
+    n1: n0
+    n2: n1
+    i1: i1
+    i2: i1
+    conditioning: {}
+    label: R1-ABR-GigabitEthernet0/0<->R2-ABR-GigabitEthernet0/0
+  - id: l1
+    n1: n0
+    n2: n2
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: R1-ABR-GigabitEthernet0/1<->R3-Area1-GigabitEthernet0/0
+  - id: l2
+    n1: n2
+    n2: n3
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: R3-Area1-GigabitEthernet0/1<->R4-Area1-GigabitEthernet0/0
+  - id: l3
+    n1: n3
+    n2: n6
+    i1: i2
+    i2: i0
+    conditioning: {}
+    label: R4-Area1-GigabitEthernet0/1<->WS1-Area1-eth0
+  - id: l4
+    n1: n1
+    n2: n4
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: R2-ABR-GigabitEthernet0/1<->R5-Area2-GigabitEthernet0/0
+  - id: l5
+    n1: n4
+    n2: n5
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: R5-Area2-GigabitEthernet0/1<->R6-Area2-GigabitEthernet0/0
+  - id: l6
+    n1: n4
+    n2: n7
+    i1: i3
+    i2: i0
+    conditioning: {}
+    label: R5-Area2-GigabitEthernet0/2<->WS2-Area2-eth0
+  - id: l7
+    n1: n5
+    n2: n8
+    i1: i2
+    i2: i0
+    conditioning: {}
+    label: R6-Area2-GigabitEthernet0/1<->WS3-Area2-eth0
+lab:
+  description: Multi-area OSPFv3 + IPv4/IPv6 dual-stack lab with 6 routers, 3 workstations,
+    DHCP, and 10 embedded faults.
+  notes: 'Areas: 0 (backbone), 1, 2. R1/R2 in Area 0, R3/R4 in Area 1, R5/R6 in Area
+    2. WS1 in Area 1, WS2/WS3 in Area 2. 10 intentional misconfigurations for troubleshooting.'
+  title: OSPFv3 Dual-Stack Troubleshooting Lab
+  version: 0.3.0
